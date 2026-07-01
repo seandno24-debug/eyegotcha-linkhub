@@ -17,6 +17,7 @@ a { color: inherit; }
   padding: 22px 16px 18px;
   background: linear-gradient(180deg, #111 0%, #151515 100%);
   color: #fff;
+  margin-bottom: 16px;
 }
 
 .hero-copy { min-width: 0; }
