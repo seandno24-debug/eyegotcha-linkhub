@@ -12,7 +12,8 @@ const cancelEditBtn = document.getElementById('cancelEditBtn');
 const autofillThumbBtn = document.getElementById('autofillThumbBtn');
 const syncSheetBtn = document.getElementById('syncSheetBtn');
 const autofillStatus = document.getElementById('autofillStatus');
-const itemImageFile = document.getElementById('itemImageFile');
+const itemImageCamera = document.getElementById('itemImageCamera');
+const itemImageAlbum = document.getElementById('itemImageAlbum');
 const imageUploadPreviewWrap = document.getElementById('imageUploadPreviewWrap');
 const imageUploadPreview = document.getElementById('imageUploadPreview');
 const formTitle = document.getElementById('formTitle');
@@ -80,7 +81,8 @@ function resetForm() {
   itemTitle.value = '';
   itemImage.value = '';
   itemLink.value = '';
-  itemImageFile.value = '';
+  itemImageCamera.value = '';
+  itemImageAlbum.value = '';
   imageUploadPreviewWrap.classList.add('hidden');
   imageUploadPreview.removeAttribute('src');
 }
@@ -94,7 +96,8 @@ function startEdit(product) {
   itemTitle.value = product.title;
   itemImage.value = product.image || '';
   itemLink.value = product.link;
-  itemImageFile.value = '';
+  itemImageCamera.value = '';
+  itemImageAlbum.value = '';
   imageUploadPreviewWrap.classList.toggle('hidden', !product.image);
   if (product.image) imageUploadPreview.src = product.image;
   itemNo.focus();
@@ -265,8 +268,8 @@ async function backfillMissingImages() {
   }
 }
 
-itemImageFile.addEventListener('change', async () => {
-  const file = itemImageFile.files?.[0];
+async function handleImageFileInput(input) {
+  const file = input.files?.[0];
   if (!file) {
     imageUploadPreviewWrap.classList.add('hidden');
     imageUploadPreview.removeAttribute('src');
@@ -283,6 +286,14 @@ itemImageFile.addEventListener('change', async () => {
     console.warn(error);
     alert('이미지를 읽지 못했어. 다른 파일로 다시 시도해줘.');
   }
+}
+
+itemImageCamera.addEventListener('change', async () => {
+  await handleImageFileInput(itemImageCamera);
+});
+
+itemImageAlbum.addEventListener('change', async () => {
+  await handleImageFileInput(itemImageAlbum);
 });
 
 function login() {
