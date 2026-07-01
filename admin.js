@@ -117,7 +117,9 @@ function renderList() {
         <span class="card-number">NO. ${String(product.no).padStart(2, '0')}</span>
         <strong>${product.title}</strong>
         <p>${product.link}</p>
-        ${product.image ? `<p class="admin-muted">IMG: ${product.image}</p>` : '<p class="admin-muted">IMG: 없음</p>'}
+        ${product.image
+          ? `<div class="admin-image-meta"><img src="${product.image}" alt="썸네일 미리보기" class="admin-image-thumb" /><p class="admin-muted">이미지 등록됨</p></div>`
+          : '<p class="admin-muted">IMG: 없음</p>'}
       </div>
       <div class="admin-item-actions">
         <button type="button" data-edit="${product.no}">수정</button>
@@ -216,7 +218,12 @@ async function autofillThumb() {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const payload = await response.json();
     if (!payload?.imageUrl) throw new Error('이미지를 찾지 못했어');
+    if (/logo|icon|favicon|badge|banner|coupon/i.test(String(payload.imageUrl))) {
+      throw new Error('아이콘성 이미지가 잡혔어');
+    }
     itemImage.value = payload.imageUrl;
+    imageUploadPreview.src = payload.imageUrl;
+    imageUploadPreviewWrap.classList.remove('hidden');
     setAutofillStatus('썸네일 주소를 자동으로 채웠어.', true);
   } catch (error) {
     console.warn(error);
@@ -235,7 +242,9 @@ async function autofillThumbForProduct(product) {
     if (!response.ok) return product;
     const payload = await response.json();
     if (!payload?.imageUrl) return product;
-    return { ...product, image: normalizeUrl(payload.imageUrl) };
+    const imageUrl = normalizeUrl(payload.imageUrl);
+    if (/logo|icon|favicon|badge|banner|coupon/i.test(String(imageUrl))) return product;
+    return { ...product, image: imageUrl };
   } catch (error) {
     console.warn(error);
     return product;
