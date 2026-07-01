@@ -25,7 +25,7 @@ const PUBLIC_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1gBDpHoU1jEgWfp
 function normalizeUrl(value) {
   const text = String(value ?? '').trim();
   if (!text) return '';
-  if (/^https?:\/\//i.test(text)) return text;
+  if (/^(https?:)?\/\//i.test(text) || /^data:/i.test(text)) return text;
   return `https://${text}`;
 }
 
