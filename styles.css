@@ -328,10 +328,13 @@ a { color: inherit; }
   height: 44px;
   border-radius: 50%;
   background: #fff;
+  border: 1px solid #eee;
   text-decoration: none;
   font-size: 18px;
   box-shadow: 0 6px 14px rgba(0,0,0,.10);
 }
+
+.collab-link-btn svg { display: block; }
 
 .collab-form-card {
   background: #fff;
