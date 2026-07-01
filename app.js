@@ -84,6 +84,28 @@ const emptyState = document.getElementById('emptyState');
 const loadError = document.getElementById('loadError');
 const loadingBar = document.getElementById('loadingBar');
 const imageCache = new Map();
+const THUMB_CACHE_KEY = 'seandino_linkhub_public_thumb_cache_v1';
+
+function loadThumbCache() {
+  try {
+    const raw = localStorage.getItem(THUMB_CACHE_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveThumbCache(cache) {
+  try {
+    localStorage.setItem(THUMB_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // ignore storage failures
+  }
+}
+
+const thumbCache = loadThumbCache();
 
 function normalizeUrl(value) {
   const text = String(value ?? '').trim();
@@ -95,6 +117,13 @@ function normalizeUrl(value) {
 function normalizeItem(row) {
   const no = Number(row.no ?? row.No ?? row['no.'] ?? row['번호']);
   const title = String(row['상품명'] ?? row.title ?? '').trim();
+  const link = normalizeUrl(
+    row['쿠팡 링크']
+    ?? row['링크']
+    ?? row.link
+    ?? row.url
+    ?? ''
+  );
   const image = normalizeUrl(
     row['이미지 주소']
     ?? row['이미지']
@@ -103,18 +132,12 @@ function normalizeItem(row) {
     ?? row.imageUrl
     ?? ''
   );
-  const link = normalizeUrl(
-    row['쿠팡 링크']
-    ?? row['링크']
-    ?? row.link
-    ?? row.url
-    ?? ''
-  );
+  const cachedImage = link ? normalizeUrl(thumbCache[link] || '') : '';
   const shortTitle = title.replace(/\s+/g, ' ').slice(0, 12) || 'product';
   return {
     no,
     title,
-    image,
+    image: image || cachedImage,
     link,
     thumbLabel: `NO ${String(no).padStart(2, '0')}`,
     thumbSubline: shortTitle,
@@ -228,9 +251,14 @@ async function hydrateImages(items) {
     if (item.image) return;
     const imageUrl = await fetchCoupangImage(item.link);
     if (!imageUrl) return;
+    const normalized = normalizeUrl(imageUrl);
+    thumbCache[item.link] = normalized;
+    saveThumbCache(thumbCache);
+    const cachedItem = PRODUCTS.find((product) => Number(product.no) === Number(item.no));
+    if (cachedItem) cachedItem.image = normalized;
     const img = document.querySelector(`[data-thumb-for="${CSS.escape(String(item.no))}"]`);
     if (img && img instanceof HTMLImageElement) {
-      img.src = imageUrl;
+      img.src = normalized;
       img.alt = `${item.title} 이미지`;
     }
   }));
