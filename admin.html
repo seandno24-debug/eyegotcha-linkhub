@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#111111" />
+  <title>션디노 링크허브 관리자</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="admin-body">
+  <main class="wrap admin-shell">
+    <section id="adminGate" class="admin-gate">
+      <h1>관리자 페이지</h1>
+      <p>상품을 추가/수정/삭제하려면 비밀번호를 입력하세요.</p>
+      <input id="adminPassword" type="password" placeholder="비밀번호" autocomplete="current-password" />
+      <button id="adminLoginBtn" type="button">입장</button>
+      <p id="adminGateError" class="admin-error" hidden>비밀번호가 일치하지 않습니다.</p>
+    </section>
+
+    <section id="adminPanel" class="admin-panel hidden">
+      <div class="admin-header">
+        <div>
+          <p class="eyebrow">션디노 링크허브 / Admin Dashboard</p>
+          <h1>상품 관리</h1>
+        </div>
+        <a class="header-link" href="index.html">공개 허브 보기</a>
+      </div>
+
+      <section class="admin-form-card">
+        <h2 id="formTitle">상품 추가</h2>
+        <div class="admin-grid">
+          <label>번호<input id="itemNo" type="number" min="1" placeholder="예: 6" /></label>
+          <label>상품명<input id="itemTitle" type="text" placeholder="상품명" /></label>
+          <label>썸네일 이미지 주소<input id="itemImage" type="url" placeholder="https://..." /></label>
+          <label>썸네일 파일 업로드<input id="itemImageFile" type="file" accept="image/*" capture="environment" /></label>
+          <label>쿠팡 링크<input id="itemLink" type="url" placeholder="https://..." /></label>
+        </div>
+        <div class="image-upload-preview hidden" id="imageUploadPreviewWrap">
+          <img id="imageUploadPreview" alt="업로드 미리보기" />
+        </div>
+        <div class="admin-actions">
+          <button id="autofillThumbBtn" type="button" class="secondary">쿠팡 썸네일 자동 채우기</button>
+          <button id="syncSheetBtn" type="button" class="secondary">시트 반영용 CSV 복사</button>
+          <button id="saveItemBtn" type="button">추가</button>
+          <button id="cancelEditBtn" type="button" class="secondary hidden">수정 취소</button>
+        </div>
+        <p id="autofillStatus" class="admin-muted" hidden></p>
+      </section>
+
+      <section class="admin-table-card">
+        <div class="section-head">
+          <h2>현재 상품</h2>
+          <p>이 화면에서 즉시 수정/삭제할 수 있어요.</p>
+        </div>
+        <div id="adminList" class="admin-list"></div>
+      </section>
+
+      <section class="admin-note">
+        <strong>저장 방식</strong>
+        <p>이미지는 쿠팡 링크나 시트의 이미지 칸을 참고해서 채우고, 필요하면 자동 채우기 버튼으로 보완하세요. 현재 공개 허브는 시트와 쿠팡 이미지 기준으로 표시됩니다.</p>
+      </section>
+    </section>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

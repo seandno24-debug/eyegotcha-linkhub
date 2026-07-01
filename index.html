@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>션디노 링크허브</title>
+  <meta name="description" content="션디노 링크허브" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="public-body">
+  <main class="public-main">
+    <section class="brand-hero-card">
+      <div class="brand-hero-copy">
+        <img class="brand-logo" src="eyegotcha-preview.png" alt="션디노의 링크허브 로고" />
+      </div>
+    </section>
+
+    <section class="search-shell">
+      <input id="searchInput" type="search" placeholder="검색어를 입력하세요" autocomplete="off" />
+      <p id="resultCount" class="result-count" aria-live="polite"></p>
+    </section>
+
+    <section id="loadingBar" class="loading-inline" aria-live="polite">
+      <span class="loading-dot"></span>
+      <span>상품 불러오는 중</span>
+    </section>
+
+    <section id="productGrid" class="product-list" aria-label="상품 목록"></section>
+
+    <p id="loadError" class="list-empty" hidden>상품을 불러오지 못했어요.</p>
+    <p id="emptyState" class="list-empty" hidden>검색 결과가 없어요.</p>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
