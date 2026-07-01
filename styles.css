@@ -63,6 +63,32 @@ a { color: inherit; }
   min-height: calc(100vh - 96px);
 }
 
+.brand-hero-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  border-radius: 22px;
+  background: #fff;
+  border: 1px solid #eee;
+  box-shadow: 0 8px 18px rgba(0,0,0,.03);
+}
+
+.brand-hero-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.brand-logo {
+  width: min(260px, 72vw);
+  height: auto;
+  display: block;
+}
+
 .search-shell {
   margin-bottom: 10px;
 }
