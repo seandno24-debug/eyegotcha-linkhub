@@ -65,6 +65,37 @@ a { color: inherit; }
   flex: 0 0 auto;
 }
 
+.affiliate-banner {
+  overflow: hidden;
+  margin: -2px 0 14px;
+  border-radius: 0 0 14px 14px;
+  background: linear-gradient(90deg, #1e40af 0%, #2563eb 50%, #1d4ed8 100%);
+  box-shadow: 0 6px 14px rgba(37, 99, 235, .18);
+}
+
+.affiliate-banner-track {
+  display: inline-flex;
+  align-items: center;
+  gap: 64px;
+  width: max-content;
+  padding: 11px 0;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  animation: banner-marquee 22s linear infinite;
+}
+
+.affiliate-banner-track span {
+  display: inline-block;
+  padding-left: 16px;
+}
+
+@keyframes banner-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
 .public-main {
   width: min(100%, 720px);
   margin: 0 auto;
