@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>아이갓챠 협업제안</title>
+  <meta name="description" content="아이갓챠 숏폼 크리에이터 협업제안" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="public-body">
+  <main class="public-main collab-main">
+    <a class="collab-back" href="index.html">← 목록으로</a>
+
+    <section class="collab-profile">
+      <img class="collab-avatar" src="eyegotcha-profile.jpg" alt="아이갓챠 프로필" />
+      <h1 class="collab-name">숏폼 크리에이터 아이갓챠</h1>
+
+      <div class="collab-categories">
+        <span>생활템</span>
+        <span>여름가전</span>
+        <span>가성비템</span>
+        <span>숏폼리뷰</span>
+      </div>
+
+      <p class="collab-intro">일상에 가치를 더하는 아이템을 발굴하고, 누구나 몰입할 수 있는 숏폼 콘텐츠로 큐레이션하여 소개합니다. 탄탄하게 구축된 팔로워와의 소통과 확실한 트래픽을 바탕으로, 브랜드와 동반 성장할 수 있는 파트너십을 제안합니다.</p>
+
+      <div class="collab-links">
+        <a class="collab-link-btn" href="https://www.instagram.com/eyegot_cha?igsh=ZWN1ZGV3Z29zZmVx&utm_source=qr" target="_blank" rel="noopener noreferrer" aria-label="인스타그램">
+          <span aria-hidden="true">📷</span>
+        </a>
+        <a class="collab-link-btn" href="https://youtube.com/@eyegot_cha?si=4gRPXkSZO4RU5GvW" target="_blank" rel="noopener noreferrer" aria-label="유튜브">
+          <span aria-hidden="true">▶</span>
+        </a>
+        <a class="collab-link-btn" href="https://www.tiktok.com/@eyegot_cha" target="_blank" rel="noopener noreferrer" aria-label="틱톡">
+          <span aria-hidden="true">🎵</span>
+        </a>
+        <a class="collab-link-btn" href="mailto:minminmin1224@gmail.com" aria-label="이메일 문의">
+          <span aria-hidden="true">✉️</span>
+        </a>
+      </div>
+    </section>
+
+    <section class="collab-form-card">
+      <h2>캠페인 제안서</h2>
+      <p class="collab-form-sub">아래 내용을 채워서 제출하면 담당자가 확인 후 연락드려요.</p>
+
+      <label class="collab-image-upload">
+        <span>캠페인 대표 이미지</span>
+        <div class="collab-image-drop" id="collabImageDrop">
+          <img id="collabImagePreview" class="hidden" alt="업로드한 대표 이미지" />
+          <span id="collabImagePlus" class="collab-image-plus" aria-hidden="true">+</span>
+        </div>
+        <input id="collabImageInput" type="file" accept="image/*" class="hidden" />
+        <small>권장 사이즈 1000×1000px, 10MB 이하</small>
+      </label>
+
+      <div class="collab-field">
+        <span>캠페인 유형</span>
+        <div class="collab-chip-group" id="campaignTypeGroup">
+          <button type="button" class="collab-chip" data-value="광고">광고</button>
+          <button type="button" class="collab-chip" data-value="공동구매">공동구매</button>
+          <button type="button" class="collab-chip" data-value="협찬">협찬</button>
+          <button type="button" class="collab-chip" data-value="제품제공">제품제공</button>
+          <button type="button" class="collab-chip" data-value="기타">기타</button>
+        </div>
+      </div>
+
+      <div class="collab-grid">
+        <label>브랜드<input id="brandName" type="text" placeholder="브랜드명" /></label>
+        <label>상품/서비스명<input id="productName" type="text" placeholder="상품 또는 서비스명" /></label>
+        <label>제품 카테고리<input id="productCategory" type="text" placeholder="예: 생활가전" /></label>
+        <label>일정<input id="campaignSchedule" type="text" placeholder="예: 7월 중순 촬영 희망" /></label>
+        <label>보상형태<input id="rewardType" type="text" placeholder="예: 원고료 + 제품제공" /></label>
+        <label>보상금액<input id="rewardAmount" type="text" placeholder="예: 협의 가능 / 00만원" /></label>
+      </div>
+
+      <label class="collab-textarea-field">특징<textarea id="productFeature" rows="3" placeholder="제품/브랜드 특징을 알려주세요"></textarea></label>
+      <label class="collab-textarea-field">제안 내용<textarea id="proposalContent" rows="4" placeholder="협업 제안 내용을 자유롭게 작성해주세요"></textarea></label>
+
+      <button id="collabSubmitBtn" type="button" class="collab-submit-btn">제출하기</button>
+      <p id="collabSubmitStatus" class="collab-submit-status hidden"></p>
+    </section>
+  </main>
+
+  <script src="collab.js"></script>
+</body>
+</html>
