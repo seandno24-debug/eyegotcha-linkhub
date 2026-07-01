@@ -1,6 +1,3 @@
-const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1gBDpHoU1jEgWfp0GLfKPniYi6q2-AS-Pa50F7ljoFDA/export?format=csv';
-const ADMIN_STORAGE_KEY = 'seandino_linkhub_admin_products_v1';
-
 const FALLBACK_PRODUCTS = [
   {
     no: 1,
@@ -145,45 +142,6 @@ function normalizeItem(row) {
   };
 }
 
-function loadAdminOverrides() {
-  try {
-    const raw = localStorage.getItem(ADMIN_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.map(normalizeItem).filter((item) => item.no && item.title && item.link);
-  } catch {
-    return [];
-  }
-}
-
-function mergeProducts(sheetItems, adminItems) {
-  const merged = new Map();
-  for (const item of sheetItems) merged.set(Number(item.no), item);
-  for (const item of adminItems) merged.set(Number(item.no), item);
-  return [...merged.values()].sort((a, b) => Number(a.no) - Number(b.no));
-}
-
-function parseCsv(csvText) {
-  const lines = csvText.split(/\r?\n/).filter(Boolean);
-  const rows = [];
-  let headers = [];
-  for (const line of lines) {
-    const cols = line.split(',').map((cell) => cell.replace(/^"|"$/g, '').trim());
-    if (!headers.length) {
-      headers = cols;
-      continue;
-    }
-    if (cols.every((cell) => !cell)) continue;
-    const row = {};
-    headers.forEach((header, idx) => {
-      row[header] = cols[idx] ?? '';
-    });
-    rows.push(row);
-  }
-  return rows;
-}
-
 function setLoading(isLoading) {
   state.loading = isLoading;
   loadingBar.classList.toggle('hidden', !isLoading);
@@ -268,21 +226,18 @@ async function loadProductsFromSheet() {
   setLoading(true);
   setLoadError(false);
   try {
-    const response = await fetch(SHEET_CSV_URL, { cache: 'no-store' });
+    const response = await fetch('/api/products', { cache: 'no-store' });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const csvText = await response.text();
-    const rows = parseCsv(csvText);
-    const dataRows = rows.filter((row) => String(row['no.'] ?? row.no ?? row['번호'] ?? '').trim());
-    const sheetItems = dataRows.map(normalizeItem).filter((item) => item.no && item.title && item.link);
-    const adminItems = loadAdminOverrides();
-    PRODUCTS.splice(0, PRODUCTS.length, ...mergeProducts(sheetItems, adminItems));
+    const payload = await response.json();
+    const rows = Array.isArray(payload?.products) ? payload.products : [];
+    const items = rows.map(normalizeItem).filter((item) => item.no && item.title && item.link);
+    PRODUCTS.splice(0, PRODUCTS.length, ...items.sort((a, b) => Number(a.no) - Number(b.no)));
     if (!PRODUCTS.length) throw new Error('No valid product rows');
     renderProducts();
   } catch (error) {
-    console.error('Failed to load sheet data:', error);
+    console.error('Failed to load products:', error);
     setLoadError(true);
-    const adminItems = loadAdminOverrides();
-    PRODUCTS.splice(0, PRODUCTS.length, ...mergeProducts(FALLBACK_PRODUCTS.map(normalizeItem), adminItems));
+    PRODUCTS.splice(0, PRODUCTS.length, ...FALLBACK_PRODUCTS.map(normalizeItem));
     renderProducts();
   } finally {
     setLoading(false);

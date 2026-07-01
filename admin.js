@@ -1,5 +1,4 @@
-const ADMIN_PASSWORD = '901224';
-const STORAGE_KEY = 'seandino_linkhub_admin_products_v1';
+let ADMIN_PASSWORD = '';
 
 const adminGate = document.getElementById('adminGate');
 const adminPanel = document.getElementById('adminPanel');
@@ -10,7 +9,6 @@ const adminList = document.getElementById('adminList');
 const saveItemBtn = document.getElementById('saveItemBtn');
 const cancelEditBtn = document.getElementById('cancelEditBtn');
 const autofillThumbBtn = document.getElementById('autofillThumbBtn');
-const syncSheetBtn = document.getElementById('syncSheetBtn');
 const autofillStatus = document.getElementById('autofillStatus');
 const itemImageAlbum = document.getElementById('itemImageAlbum');
 const imageUploadPreviewWrap = document.getElementById('imageUploadPreviewWrap');
@@ -20,21 +18,11 @@ const itemNo = document.getElementById('itemNo');
 const itemTitle = document.getElementById('itemTitle');
 const itemImage = document.getElementById('itemImage');
 const itemLink = document.getElementById('itemLink');
-const PUBLIC_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1gBDpHoU1jEgWfp0GLfKPniYi6q2-AS-Pa50F7ljoFDA/edit?usp=sharing';
-
 function normalizeUrl(value) {
   const text = String(value ?? '').trim();
   if (!text) return '';
   if (/^(https?:)?\/\//i.test(text) || /^data:/i.test(text)) return text;
   return `https://${text}`;
-}
-
-function toSheetImageFormula(url) {
-  const text = String(url ?? '').trim();
-  if (!text) return '';
-  if (/^=IMAGE\(/i.test(text)) return text;
-  const safe = text.replace(/"/g, '""');
-  return `=IMAGE("${safe}")`;
 }
 
 const seedProducts = [
@@ -51,19 +39,36 @@ let editingNo = null;
 let imageBackfillRunning = false;
 
 function loadProducts() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [...seedProducts];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [...seedProducts];
-    return parsed;
-  } catch {
-    return [...seedProducts];
-  }
+  return [...seedProducts];
 }
 
-function persistProducts() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+async function fetchProducts() {
+  const response = await fetch('/api/products', { cache: 'no-store' });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const payload = await response.json();
+  return Array.isArray(payload?.products) ? payload.products : [];
+}
+
+async function persistProducts() {
+  // no-op: writes now go through saveProductToApi/deleteProductFromApi
+}
+
+async function saveProductToApi(item) {
+  const response = await fetch('/api/products', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ password: ADMIN_PASSWORD, item }),
+  });
+  if (!response.ok) throw new Error((await response.json().catch(() => ({})))?.error || `HTTP ${response.status}`);
+}
+
+async function deleteProductFromApi(no) {
+  const response = await fetch('/api/products', {
+    method: 'DELETE',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ password: ADMIN_PASSWORD, no }),
+  });
+  if (!response.ok) throw new Error((await response.json().catch(() => ({})))?.error || `HTTP ${response.status}`);
 }
 
 function setAutofillStatus(text, visible = true) {
@@ -137,17 +142,22 @@ function renderList() {
   });
 
   adminList.querySelectorAll('[data-delete]').forEach((btn) => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const no = Number(btn.dataset.delete);
-      products = products.filter((item) => Number(item.no) !== no);
-      persistProducts();
-      renderList();
-      resetForm();
+      if (!confirm(`NO. ${String(no).padStart(2, '0')}을(를) 삭제할까요?`)) return;
+      try {
+        await deleteProductFromApi(no);
+        products = products.filter((item) => Number(item.no) !== no);
+        renderList();
+        resetForm();
+      } catch (error) {
+        alert(`삭제 실패: ${error.message}`);
+      }
     });
   });
 }
 
-function submitItem() {
+async function submitItem() {
   const next = {
     no: Number(itemNo.value),
     title: itemTitle.value.trim(),
@@ -162,45 +172,27 @@ function submitItem() {
 
   const existsIndex = products.findIndex((item) => Number(item.no) === next.no);
 
+  if (editingNo === null && existsIndex >= 0) {
+    if (!confirm(`NO. ${String(next.no).padStart(2, '0')}는 이미 있습니다. 덮어쓸까요?`)) return;
+  }
+
+  try {
+    await saveProductToApi(next);
+  } catch (error) {
+    alert(`저장 실패: ${error.message}`);
+    return;
+  }
+
   if (editingNo !== null) {
     products = products.map((item) => Number(item.no) === Number(editingNo) ? next : item);
   } else if (existsIndex >= 0) {
-    if (!confirm(`NO. ${String(next.no).padStart(2, '0')}는 이미 있습니다. 덮어쓸까요?`)) return;
     products[existsIndex] = next;
   } else {
     products.push(next);
   }
 
-  persistProducts();
   renderList();
   resetForm();
-}
-
-function buildSheetRow(product) {
-  return [
-    product.no,
-    product.title,
-    toSheetImageFormula(product.image),
-    product.link,
-  ];
-}
-
-async function syncToGoogleSheet() {
-  const sorted = [...products].sort((a, b) => Number(a.no) - Number(b.no));
-  const csv = [
-    ['번호', '상품명', '이미지 주소', '쿠팡 링크'].join(','),
-    ...sorted.map((product) => buildSheetRow(product).map((cell) => {
-      const text = String(cell ?? '');
-      return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
-    }).join(',')),
-  ].join('\n');
-
-  try {
-    await navigator.clipboard.writeText(csv);
-    setAutofillStatus(`시트 반영용 CSV를 복사했어. ${PUBLIC_SHEET_URL} 에 붙여넣으면 메인 화면과 맞춰질 거야.`, true);
-  } catch {
-    setAutofillStatus(`시트 반영용 CSV를 만들었어. ${PUBLIC_SHEET_URL} 에 직접 반영해줘.`, true);
-  }
 }
 
 async function autofillThumb() {
@@ -265,7 +257,9 @@ async function backfillMissingImages() {
     }
     if (changed) {
       products = nextProducts;
-      persistProducts();
+      for (const product of nextProducts) {
+        try { await saveProductToApi(product); } catch (error) { console.warn(error); }
+      }
       renderList();
       setAutofillStatus('비어 있던 썸네일을 자동으로 채웠어.', true);
     }
@@ -298,14 +292,23 @@ itemImageAlbum.addEventListener('change', async () => {
   await handleImageFileInput(itemImageAlbum);
 });
 
-function login() {
-  if (adminPassword.value === ADMIN_PASSWORD) {
+async function login() {
+  const candidate = adminPassword.value;
+  try {
+    const response = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ password: candidate, action: 'verify' }),
+    });
+    if (!response.ok) throw new Error('bad password');
+    ADMIN_PASSWORD = candidate;
     adminGate.classList.add('hidden');
     adminPanel.classList.remove('hidden');
     adminGateError.hidden = true;
+    products = await fetchProducts();
     renderList();
     backfillMissingImages();
-  } else {
+  } catch (error) {
     adminGateError.hidden = false;
   }
 }
@@ -318,6 +321,5 @@ adminPassword.addEventListener('keydown', (event) => {
 saveItemBtn.addEventListener('click', submitItem);
 cancelEditBtn.addEventListener('click', resetForm);
 autofillThumbBtn.addEventListener('click', autofillThumb);
-syncSheetBtn.addEventListener('click', syncToGoogleSheet);
 
 resetForm();
