@@ -110,7 +110,7 @@ const thumbCache = loadThumbCache();
 function normalizeUrl(value) {
   const text = String(value ?? '').trim();
   if (!text) return '';
-  if (/^https?:\/\//i.test(text)) return text;
+  if (/^(https?:)?\/\//i.test(text) || /^data:/i.test(text)) return text;
   return `https://${text}`;
 }
 
