@@ -81,6 +81,9 @@ const emptyState = document.getElementById('emptyState');
 const loadError = document.getElementById('loadError');
 const loadingBar = document.getElementById('loadingBar');
 const loadingOverlay = document.getElementById('loadingOverlay');
+const loadingOverlayText = document.getElementById('loadingOverlayText');
+let loadingTimerHandle = null;
+let loadingStartedAt = 0;
 const imageCache = new Map();
 const THUMB_CACHE_KEY = 'seandino_linkhub_public_thumb_cache_v1';
 
@@ -147,6 +150,22 @@ function setLoading(isLoading) {
   state.loading = isLoading;
   loadingBar.classList.toggle('hidden', !isLoading);
   if (loadingOverlay) loadingOverlay.classList.toggle('is-hidden', !isLoading);
+
+  if (isLoading) {
+    loadingStartedAt = Date.now();
+    updateLoadingCounter();
+    if (loadingTimerHandle) clearInterval(loadingTimerHandle);
+    loadingTimerHandle = setInterval(updateLoadingCounter, 200);
+  } else if (loadingTimerHandle) {
+    clearInterval(loadingTimerHandle);
+    loadingTimerHandle = null;
+  }
+}
+
+function updateLoadingCounter() {
+  if (!loadingOverlayText) return;
+  const elapsedSeconds = (Date.now() - loadingStartedAt) / 1000;
+  loadingOverlayText.textContent = `상품 불러오는 중... (${elapsedSeconds.toFixed(1)}초)`;
 }
 
 function setLoadError(show) {
