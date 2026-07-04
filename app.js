@@ -80,6 +80,7 @@ const resultCount = document.getElementById('resultCount');
 const emptyState = document.getElementById('emptyState');
 const loadError = document.getElementById('loadError');
 const loadingBar = document.getElementById('loadingBar');
+const loadingOverlay = document.getElementById('loadingOverlay');
 const imageCache = new Map();
 const THUMB_CACHE_KEY = 'seandino_linkhub_public_thumb_cache_v1';
 
@@ -145,6 +146,7 @@ function normalizeItem(row) {
 function setLoading(isLoading) {
   state.loading = isLoading;
   loadingBar.classList.toggle('hidden', !isLoading);
+  if (loadingOverlay) loadingOverlay.classList.toggle('is-hidden', !isLoading);
 }
 
 function setLoadError(show) {
@@ -249,5 +251,4 @@ searchInput.addEventListener('input', (event) => {
   renderProducts();
 });
 
-renderProducts();
 loadProductsFromSheet();
