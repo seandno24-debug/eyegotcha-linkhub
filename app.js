@@ -155,17 +155,24 @@ function setLoading(isLoading) {
     loadingStartedAt = Date.now();
     updateLoadingCounter();
     if (loadingTimerHandle) clearInterval(loadingTimerHandle);
-    loadingTimerHandle = setInterval(updateLoadingCounter, 200);
+    loadingTimerHandle = setInterval(updateLoadingCounter, 100);
   } else if (loadingTimerHandle) {
     clearInterval(loadingTimerHandle);
     loadingTimerHandle = null;
   }
 }
 
+const ESTIMATED_LOAD_SECONDS = 2;
+
 function updateLoadingCounter() {
   if (!loadingOverlayText) return;
   const elapsedSeconds = (Date.now() - loadingStartedAt) / 1000;
-  loadingOverlayText.textContent = `상품 불러오는 중... (${elapsedSeconds.toFixed(1)}초)`;
+  const remainingSeconds = ESTIMATED_LOAD_SECONDS - elapsedSeconds;
+  if (remainingSeconds > 0) {
+    loadingOverlayText.textContent = `상품 불러오는 중... (약 ${remainingSeconds.toFixed(1)}초 남음)`;
+  } else {
+    loadingOverlayText.textContent = '상품 불러오는 중... 거의 다 되었어요';
+  }
 }
 
 function setLoadError(show) {
