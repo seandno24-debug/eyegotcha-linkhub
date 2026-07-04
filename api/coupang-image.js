@@ -6,6 +6,19 @@ export default async function handler(req, res) {
       return;
     }
 
+    const ALLOWED_HOSTS = [/(^|\.)coupang\.com$/i, /(^|\.)link\.coupang\.com$/i];
+    let parsedHost = '';
+    try {
+      parsedHost = new URL(url).hostname;
+    } catch {
+      res.status(400).json({ error: 'Invalid url' });
+      return;
+    }
+    if (!ALLOWED_HOSTS.some((re) => re.test(parsedHost))) {
+      res.status(400).json({ error: 'Only coupang.com URLs are allowed' });
+      return;
+    }
+
     const fetchWithFallback = async (targetUrl) => {
       const response = await fetch(targetUrl, {
         redirect: 'follow',
