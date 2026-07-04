@@ -114,8 +114,8 @@ function fileToDataUrl(file) {
   });
 }
 
-const MAX_THUMB_DIMENSION = 800;
-const THUMB_JPEG_QUALITY = 0.72;
+const MAX_THUMB_DIMENSION = 240;
+const THUMB_JPEG_QUALITY = 0.7;
 
 function loadImageElement(dataUrl) {
   return new Promise((resolve, reject) => {
