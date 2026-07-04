@@ -590,6 +590,8 @@ a { color: inherit; }
 
 .admin-item strong { display: block; margin-top: 6px; }
 .admin-item p { margin: 8px 0 0; word-break: break-all; color: #666; font-size: 13px; }
+.admin-link { color: #3366cc; text-decoration: underline; }
+.admin-link:hover { color: #1a3d99; }
 .admin-item-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .admin-muted { color: #777; font-size: 13px; }
 .admin-image-meta { display: flex; align-items: center; gap: 10px; margin-top: 8px; }

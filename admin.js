@@ -121,7 +121,7 @@ function renderList() {
       <div>
         <span class="card-number">NO. ${String(product.no).padStart(2, '0')}</span>
         <strong>${product.title}</strong>
-        <p>${product.link}</p>
+        <p><a href="${product.link}" target="_blank" rel="noopener noreferrer" class="admin-link">${product.link}</a></p>
         ${product.image
           ? `<div class="admin-image-meta"><img src="${product.image}" alt="썸네일 미리보기" class="admin-image-thumb" /><p class="admin-muted">이미지 등록됨</p></div>`
           : '<p class="admin-muted">IMG: 없음</p>'}
