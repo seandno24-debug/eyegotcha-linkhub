@@ -114,6 +114,41 @@ function fileToDataUrl(file) {
   });
 }
 
+const MAX_THUMB_DIMENSION = 800;
+const THUMB_JPEG_QUALITY = 0.72;
+
+function loadImageElement(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('이미지를 디코딩할 수 없습니다.'));
+    img.src = dataUrl;
+  });
+}
+
+async function fileToResizedDataUrl(file, maxDimension = MAX_THUMB_DIMENSION, quality = THUMB_JPEG_QUALITY) {
+  const originalDataUrl = await fileToDataUrl(file);
+  try {
+    const img = await loadImageElement(originalDataUrl);
+    const scale = Math.min(1, maxDimension / Math.max(img.naturalWidth, img.naturalHeight));
+    const width = Math.max(1, Math.round(img.naturalWidth * scale));
+    const height = Math.max(1, Math.round(img.naturalHeight * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, width, height);
+
+    const resizedDataUrl = canvas.toDataURL('image/jpeg', quality);
+    // 만약 리사이즈 결과가 원본보다 더 크면(이미 작은 이미지 등) 원본 그대로 사용
+    return resizedDataUrl.length < originalDataUrl.length ? resizedDataUrl : originalDataUrl;
+  } catch (error) {
+    console.warn('이미지 리사이즈 실패, 원본 사용:', error);
+    return originalDataUrl;
+  }
+}
+
 function renderList() {
   const sorted = [...products].sort((a, b) => Number(a.no) - Number(b.no));
   adminList.innerHTML = sorted.map((product) => `
@@ -277,11 +312,12 @@ async function handleImageFileInput(input) {
   }
 
   try {
-    const dataUrl = await fileToDataUrl(file);
+    setAutofillStatus('이미지를 최적화하는 중...', true);
+    const dataUrl = await fileToResizedDataUrl(file);
     itemImage.value = dataUrl;
     imageUploadPreview.src = dataUrl;
     imageUploadPreviewWrap.classList.remove('hidden');
-    setAutofillStatus('업로드한 이미지를 썸네일 주소로 반영했어.', true);
+    setAutofillStatus('업로드한 이미지를 썸네일 주소로 반영했어 (자동 최적화됨).', true);
   } catch (error) {
     console.warn(error);
     alert('이미지를 읽지 못했어. 다른 파일로 다시 시도해줘.');
