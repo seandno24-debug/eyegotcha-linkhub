@@ -13,9 +13,13 @@
   <main class="wrap admin-shell">
     <section id="adminGate" class="admin-gate">
       <h1>관리자 페이지</h1>
-      <p>상품을 추가/수정/삭제하려면 비밀번호를 입력하세요.</p>
+      <p>해당 페이지는 관리자에게만 접근 권한이 있습니다.</p>
       <input id="adminPassword" type="password" placeholder="비밀번호" autocomplete="current-password" />
       <button id="adminLoginBtn" type="button">입장</button>
+      <div class="admin-gate-links" aria-label="페이지 이동">
+        <a href="index.html">쇼핑허브</a>
+        <a href="collab.html">협업제안</a>
+      </div>
       <p id="adminGateError" class="admin-error" hidden>비밀번호가 일치하지 않습니다.</p>
     </section>
 
