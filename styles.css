@@ -564,15 +564,20 @@ a { color: inherit; }
 .admin-gate-top a {
   display: inline-flex;
   align-items: center;
-  min-height: 30px;
-  color: #111;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #2f6bff 0%, #1f4fd6 100%);
+  color: #fff;
   text-decoration: none;
   font-size: 13px;
   font-weight: 800;
+  box-shadow: 0 6px 14px rgba(31, 79, 214, .18);
 }
 
 .admin-gate-top a:hover {
-  text-decoration: underline;
+  background: linear-gradient(180deg, #3d77ff 0%, #244ed0 100%);
 }
 
 .admin-gate input,
