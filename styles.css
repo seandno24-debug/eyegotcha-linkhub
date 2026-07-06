@@ -553,30 +553,26 @@ a { color: inherit; }
 
 .admin-gate { max-width: 420px; margin: 20px auto 12px; text-align: center; }
 
-.admin-gate-links {
+.admin-gate-top {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
+  align-items: center;
   gap: 10px;
-  margin: 12px 0 4px;
-  flex-wrap: wrap;
+  margin-bottom: 14px;
 }
 
-.admin-gate-links a {
+.admin-gate-top a {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-height: 34px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: #f2f2f2;
+  min-height: 30px;
   color: #111;
   text-decoration: none;
   font-size: 13px;
   font-weight: 800;
 }
 
-.admin-gate-links a:hover {
-  background: #e8e8e8;
+.admin-gate-top a:hover {
+  text-decoration: underline;
 }
 
 .admin-gate input,
@@ -617,6 +613,10 @@ a { color: inherit; }
   color: #fff;
   font-weight: 700;
   cursor: pointer;
+}
+
+.admin-gate button {
+  margin-top: 12px;
 }
 
 .admin-header {
