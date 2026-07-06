@@ -7,6 +7,18 @@ const collabSubmitBtn = document.getElementById('collabSubmitBtn');
 const collabSubmitStatus = document.getElementById('collabSubmitStatus');
 
 let selectedCampaignType = '';
+let selectedImageDataUrl = '';
+
+const fieldIds = [
+  'brandName',
+  'productName',
+  'productCategory',
+  'campaignSchedule',
+  'rewardType',
+  'rewardAmount',
+  'productFeature',
+  'proposalContent',
+];
 
 collabImageDrop.addEventListener('click', () => collabImageInput.click());
 
@@ -15,7 +27,8 @@ collabImageInput.addEventListener('change', () => {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    collabImagePreview.src = String(reader.result || '');
+    selectedImageDataUrl = String(reader.result || '');
+    collabImagePreview.src = selectedImageDataUrl;
     collabImagePreview.classList.remove('hidden');
     collabImagePlus.classList.add('hidden');
   };
@@ -35,9 +48,18 @@ function setStatus(message) {
   collabSubmitStatus.classList.remove('hidden');
 }
 
-collabSubmitBtn.addEventListener('click', () => {
-  const brandName = document.getElementById('brandName').value.trim();
-  const productName = document.getElementById('productName').value.trim();
+function setSubmitting(isSubmitting) {
+  collabSubmitBtn.disabled = isSubmitting;
+  collabSubmitBtn.textContent = isSubmitting ? '전송 중...' : '제출하기';
+}
+
+function getValue(id) {
+  return document.getElementById(id).value.trim();
+}
+
+collabSubmitBtn.addEventListener('click', async () => {
+  const brandName = getValue('brandName');
+  const productName = getValue('productName');
 
   if (!selectedCampaignType) {
     setStatus('캠페인 유형을 선택해주세요.');
@@ -48,8 +70,48 @@ collabSubmitBtn.addEventListener('click', () => {
     return;
   }
 
-  // NOTE: 저장소(제안서 게시판) 연동은 아직 미확정 상태.
-  // 사용자가 저장 방식(Google Sheets vs Vercel KV/Postgres)을 정하면
-  // 이 부분에서 실제 제출 처리를 이어서 구현할 예정.
-  setStatus('제안서 접수 준비 중이에요. 곧 정식으로 연결될 예정입니다. 급하면 이메일 버튼으로 연락해주세요!');
+  const payload = {
+    campaignType: selectedCampaignType,
+    brandName,
+    productName,
+    productCategory: getValue('productCategory'),
+    campaignSchedule: getValue('campaignSchedule'),
+    rewardType: getValue('rewardType'),
+    rewardAmount: getValue('rewardAmount'),
+    productFeature: getValue('productFeature'),
+    proposalContent: getValue('proposalContent'),
+    imageDataUrl: selectedImageDataUrl,
+    source: 'collab.html',
+    submittedAt: new Date().toISOString(),
+  };
+
+  try {
+    setSubmitting(true);
+    collabSubmitStatus.classList.add('hidden');
+
+    const response = await fetch('/api/collab-submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(result?.error || '제출에 실패했어요');
+    }
+
+    setStatus('접수됐어요. 시트에 저장됐고 확인 후 연락드릴게요.');
+    fieldIds.forEach((id) => { document.getElementById(id).value = ''; });
+    selectedCampaignType = '';
+    [...campaignTypeGroup.querySelectorAll('.collab-chip')].forEach((chip) => chip.classList.remove('is-active'));
+    selectedImageDataUrl = '';
+    collabImagePreview.src = '';
+    collabImagePreview.classList.add('hidden');
+    collabImagePlus.classList.remove('hidden');
+    collabImageInput.value = '';
+  } catch (error) {
+    setStatus(error?.message || '제출 중 오류가 발생했어요. 잠시 후 다시 시도해주세요.');
+  } finally {
+    setSubmitting(false);
+  }
 });
