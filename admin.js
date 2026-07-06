@@ -59,7 +59,9 @@ async function saveProductToApi(item) {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ password: ADMIN_PASSWORD, item }),
   });
-  if (!response.ok) throw new Error((await response.json().catch(() => ({})))?.error || `HTTP ${response.status}`);
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(payload?.error || `HTTP ${response.status}`);
+  return payload?.product || item;
 }
 
 async function deleteProductFromApi(no) {
@@ -212,7 +214,8 @@ async function submitItem() {
   }
 
   try {
-    await saveProductToApi(next);
+    const saved = await saveProductToApi(next);
+    next.image = normalizeUrl(saved.image || next.image);
   } catch (error) {
     alert(`저장 실패: ${error.message}`);
     return;
