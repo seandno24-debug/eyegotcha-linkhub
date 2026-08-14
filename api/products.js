@@ -1,7 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+const SUPABASE_URL = process.env.SUPABASE_URL || '';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+const hasSupabaseConfig = Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
+const supabase = hasSupabaseConfig
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+  : null;
 const STORAGE_BUCKET = process.env.PRODUCT_IMAGES_BUCKET || 'product-images';
+const SEED_PRODUCTS = [
+  { no: 1, title: '멀티팬 벽걸이 에어컨 바람막이 화이트', image: '', link: 'https://link.coupang.com/a/eWRHxQmayq' },
+  { no: 2, title: '무선 핸드 제면기 두께조절 핸디형 간편세척 면뽑기 국수', image: '', link: 'https://link.coupang.com/a/eWR053bWsC' },
+  { no: 3, title: '무선 전동 자동차 파라솔 대형 우산 햇빛차단 가림막', image: '', link: 'https://www.coupang.com/vp/products/8558260198?itemId=14138743888' },
+  { no: 4, title: '3in1 접이식 휴대용 선풍기 양산 우산 거치 고정 탁상 겸용 무선 손선풍기', image: '', link: 'https://link.coupang.com/a/eWSr9IBhim' },
+  { no: 5, title: '알리사 100단 아이스 터보 MAX 휴대용 선풍기', image: '', link: 'https://link.coupang.com/a/eW1qRzRlNk' },
+  { no: 6, title: '현관문 안전고리 이중장금 문손잡이 안전잠금장치', image: '', link: 'https://link.coupang.com/a/eXh5HnqPZs' },
+];
 
 const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const RATE_LIMIT_MAX_FAILS = 5;
@@ -101,14 +114,38 @@ async function normalizeImageForStorage(image, no) {
   }
 }
 
+function respondWithFallbackProducts(res, error) {
+  if (error) console.warn('Falling back to seed products:', error?.message || error);
+  res.setHeader('Cache-Control', 'public, max-age=10, s-maxage=30, stale-while-revalidate=60');
+  res.setHeader('Vary', 'Accept-Encoding');
+  res.status(200).json({
+    products: SEED_PRODUCTS,
+    source: 'fallback',
+    fallbackReason: error?.message || 'Supabase unavailable',
+  });
+}
+
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
-      const { data, error } = await supabase.from('products').select('*').order('no', { ascending: true });
-      if (error) throw error;
+      if (!hasSupabaseConfig) {
+        respondWithFallbackProducts(res);
+        return;
+      }
+
+      let data = [];
+      try {
+        const result = await supabase.from('products').select('*').order('no', { ascending: true });
+        if (result?.error) throw result.error;
+        data = Array.isArray(result?.data) ? result.data : [];
+      } catch (error) {
+        respondWithFallbackProducts(res, error);
+        return;
+      }
+
       res.setHeader('Cache-Control', 'public, max-age=10, s-maxage=30, stale-while-revalidate=60');
       res.setHeader('Vary', 'Accept-Encoding');
-      res.status(200).json({ products: data });
+      res.status(200).json({ products: data, source: 'supabase' });
       return;
     }
 
@@ -117,6 +154,11 @@ export default async function handler(req, res) {
 
     if (isRateLimited(ip)) {
       rateLimitResponse(res, ip, failedAttemptsByIp.get(ip));
+      return;
+    }
+
+    if (!hasSupabaseConfig) {
+      res.status(503).json({ error: 'Supabase 환경변수가 설정되지 않았어요' });
       return;
     }
 
