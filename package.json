@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "rm -rf dist && mkdir -p dist && cp index.html admin.html collab.html app.js admin.js collab.js styles.css favicon.svg eyegotcha-logo.svg eyegotcha-profile.jpg eyegotcha-preview.png _headers dist/ && cp -R functions dist/"
+    "build": "rm -rf dist && mkdir -p dist/server dist/.openai && cp server/index.js dist/server/index.js && printf '{\"project_id\":\"appgprj_6a7ecf85c54c81918f0393adfe8467c7\"}' > dist/.openai/hosting.json"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0"
