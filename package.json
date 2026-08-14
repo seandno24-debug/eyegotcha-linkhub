@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "echo build complete"
+    "build": "rm -rf dist && mkdir -p dist && cp index.html admin.html collab.html app.js admin.js collab.js styles.css favicon.svg eyegotcha-logo.svg eyegotcha-profile.jpg eyegotcha-preview.png _headers dist/ && cp -R functions dist/"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0"
