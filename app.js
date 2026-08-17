@@ -86,6 +86,13 @@ let loadingTimerHandle = null;
 let loadingStartedAt = 0;
 const imageCache = new Map();
 const THUMB_CACHE_KEY = 'seandino_linkhub_public_thumb_cache_v1';
+const PRODUCTS_CACHE_KEY = 'seandino_linkhub_public_products_cache_v1';
+
+function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new Error('timeout')), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
 
 function loadThumbCache() {
   try {
@@ -106,7 +113,27 @@ function saveThumbCache(cache) {
   }
 }
 
+function loadProductsCache() {
+  try {
+    const raw = localStorage.getItem(PRODUCTS_CACHE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveProductsCache(items) {
+  try {
+    localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(items));
+  } catch {
+    // ignore storage failures
+  }
+}
+
 const thumbCache = loadThumbCache();
+let hydrationTimer = null;
 
 function normalizeUrl(value) {
   const text = String(value ?? '').trim();
@@ -211,7 +238,10 @@ function renderProducts() {
     </a>
   `).join('');
 
-  hydrateImages(filtered);
+  if (hydrationTimer) clearTimeout(hydrationTimer);
+  hydrationTimer = setTimeout(() => {
+    void hydrateImages(filtered);
+  }, 160);
 }
 
 async function fetchCoupangImage(link) {
@@ -219,7 +249,7 @@ async function fetchCoupangImage(link) {
 
   const apiUrl = `/api/coupang-image?url=${encodeURIComponent(link)}`;
   try {
-    const response = await fetch(apiUrl, { cache: 'no-store' });
+    const response = await fetchWithTimeout(apiUrl, { cache: 'no-store' }, 7000);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const payload = await response.json();
     const imageUrl = payload?.imageUrl || null;
@@ -233,10 +263,10 @@ async function fetchCoupangImage(link) {
 }
 
 async function hydrateImages(items) {
-  await Promise.all(items.map(async (item) => {
-    if (item.image) return;
+  for (const item of items) {
+    if (item.image) continue;
     const imageUrl = await fetchCoupangImage(item.link);
-    if (!imageUrl) return;
+    if (!imageUrl) continue;
     const normalized = normalizeUrl(imageUrl);
     thumbCache[item.link] = normalized;
     saveThumbCache(thumbCache);
@@ -247,28 +277,26 @@ async function hydrateImages(items) {
       img.src = normalized;
       img.alt = `${item.title} 이미지`;
     }
-  }));
+  }
 }
 
-async function loadProductsFromSheet() {
-  setLoading(true);
-  setLoadError(false);
+function setProducts(items) {
+  PRODUCTS.splice(0, PRODUCTS.length, ...items);
+  saveProductsCache(PRODUCTS);
+  renderProducts();
+}
+
+async function refreshProductsFromSheet() {
   try {
-    const response = await fetch('/api/products', { cache: 'no-store' });
+    const response = await fetchWithTimeout('/api/products', { cache: 'no-store' }, 4500);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const payload = await response.json();
     const rows = Array.isArray(payload?.products) ? payload.products : [];
     const items = rows.map(normalizeItem).filter((item) => item.no && item.title && item.link);
-    PRODUCTS.splice(0, PRODUCTS.length, ...items.sort((a, b) => Number(a.no) - Number(b.no)));
-    if (!PRODUCTS.length) throw new Error('No valid product rows');
-    renderProducts();
+    if (!items.length) throw new Error('No valid product rows');
+    setProducts(items.sort((a, b) => Number(a.no) - Number(b.no)));
   } catch (error) {
-    console.error('Failed to load products:', error);
-    setLoadError(true);
-    PRODUCTS.splice(0, PRODUCTS.length, ...FALLBACK_PRODUCTS.map(normalizeItem));
-    renderProducts();
-  } finally {
-    setLoading(false);
+    console.warn('Failed to refresh products:', error);
   }
 }
 
@@ -277,4 +305,12 @@ searchInput.addEventListener('input', (event) => {
   renderProducts();
 });
 
-loadProductsFromSheet();
+const initialProducts = loadProductsCache();
+if (initialProducts.length) {
+  setProducts(initialProducts.map(normalizeItem).filter((item) => item.no && item.title && item.link));
+} else {
+  setProducts(FALLBACK_PRODUCTS.map(normalizeItem));
+}
+
+setLoading(false);
+void refreshProductsFromSheet();

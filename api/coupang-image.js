@@ -19,22 +19,29 @@ export default async function handler(req, res) {
       return;
     }
 
-    const fetchWithFallback = async (targetUrl) => {
-      const response = await fetch(targetUrl, {
-        redirect: 'follow',
-        headers: {
-          'user-agent': 'Mozilla/5.0 (compatible; OpenClaw/1.0)',
-          accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        },
-      });
-      if (!response.ok) return null;
-      return response.text();
+    const fetchWithFallback = async (targetUrl, timeoutMs = 6500) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(new Error('timeout')), timeoutMs);
+      try {
+        const response = await fetch(targetUrl, {
+          redirect: 'follow',
+          signal: controller.signal,
+          headers: {
+            'user-agent': 'Mozilla/5.0 (compatible; OpenClaw/1.0)',
+            accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          },
+        });
+        if (!response.ok) return null;
+        return response.text();
+      } finally {
+        clearTimeout(timer);
+      }
     };
 
     let html = await fetchWithFallback(url);
     if (!html) {
       const proxied = `https://r.jina.ai/http://${url.replace(/^https?:\/\//i, '')}`;
-      html = await fetchWithFallback(proxied);
+      html = await fetchWithFallback(proxied, 8000);
     }
 
     if (!html) {

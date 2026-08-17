@@ -421,6 +421,15 @@ a { color: inherit; }
   justify-content: center;
   background: #fafafa;
   overflow: hidden;
+  padding: 0;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none;
+}
+
+.collab-image-drop:focus-visible {
+  box-shadow: 0 0 0 3px rgba(17,17,17,.08);
 }
 
 .collab-image-drop img {

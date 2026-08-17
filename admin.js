@@ -18,6 +18,8 @@ const itemNo = document.getElementById('itemNo');
 const itemTitle = document.getElementById('itemTitle');
 const itemImage = document.getElementById('itemImage');
 const itemLink = document.getElementById('itemLink');
+const PUBLIC_PRODUCTS_CACHE_KEY = 'seandino_linkhub_public_products_cache_v1';
+
 function normalizeUrl(value) {
   const text = String(value ?? '').trim();
   if (!text) return '';
@@ -36,17 +38,50 @@ const seedProducts = [
 
 let products = loadProducts();
 let editingNo = null;
+let editingOriginalImage = '';
 let imageBackfillRunning = false;
 
 function loadProducts() {
-  return [...seedProducts];
+  try {
+    const raw = localStorage.getItem(PUBLIC_PRODUCTS_CACHE_KEY);
+    if (!raw) return [...seedProducts];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || !parsed.length) return [...seedProducts];
+    return parsed
+      .map((item) => ({
+        no: Number(item.no),
+        title: String(item.title || '').trim(),
+        image: normalizeUrl(item.image || ''),
+        link: normalizeUrl(item.link || ''),
+      }))
+      .filter((item) => item.no && item.title && item.link);
+  } catch {
+    return [...seedProducts];
+  }
+}
+
+function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(new Error('timeout')), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
 async function fetchProducts() {
-  const response = await fetch('/api/products', { cache: 'no-store' });
+  const response = await fetchWithTimeout('/api/products', { cache: 'no-store' }, 5000);
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const payload = await response.json();
   return Array.isArray(payload?.products) ? payload.products : [];
+}
+
+async function fetchProductsWithFallback() {
+  try {
+    const live = await fetchProducts();
+    if (live.length) return live;
+    throw new Error('No live products');
+  } catch (error) {
+    console.warn('Live products unavailable, falling back to cached/seed products:', error);
+    return loadProducts();
+  }
 }
 
 async function persistProducts() {
@@ -55,7 +90,7 @@ async function persistProducts() {
 
 async function saveProductToApi(item) {
   const response = await fetch('/api/products', {
-    method: 'POST',
+    method: editingNo !== null ? 'PUT' : 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ password: ADMIN_PASSWORD, item }),
   });
@@ -80,6 +115,7 @@ function setAutofillStatus(text, visible = true) {
 
 function resetForm() {
   editingNo = null;
+  editingOriginalImage = '';
   formTitle.textContent = '상품 추가';
   saveItemBtn.textContent = '추가';
   cancelEditBtn.classList.add('hidden');
@@ -94,6 +130,7 @@ function resetForm() {
 
 function startEdit(product) {
   editingNo = product.no;
+  editingOriginalImage = normalizeUrl(product.image || '');
   formTitle.textContent = `상품 수정 - NO. ${String(product.no).padStart(2, '0')}`;
   saveItemBtn.textContent = '수정 저장';
   cancelEditBtn.classList.remove('hidden');
@@ -213,8 +250,18 @@ async function submitItem() {
     if (!confirm(`NO. ${String(next.no).padStart(2, '0')}는 이미 있습니다. 덮어쓸까요?`)) return;
   }
 
+  const payloadItem = {
+    no: next.no,
+    title: next.title,
+    link: next.link,
+  };
+
+  if (editingNo === null || next.image !== editingOriginalImage) {
+    payloadItem.image = next.image;
+  }
+
   try {
-    const saved = await saveProductToApi(next);
+    const saved = await saveProductToApi(payloadItem);
     next.image = normalizeUrl(saved.image || next.image);
   } catch (error) {
     alert(`저장 실패: ${error.message}`);
@@ -339,15 +386,22 @@ async function login() {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ password: candidate, action: 'verify' }),
     });
-    if (!response.ok) throw new Error('bad password');
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('비밀번호가 일치하지 않습니다.');
+      }
+      throw new Error(payload?.error || `로그인 확인 실패 (HTTP ${response.status})`);
+    }
     ADMIN_PASSWORD = candidate;
     adminGate.classList.add('hidden');
     adminPanel.classList.remove('hidden');
     adminGateError.hidden = true;
-    products = await fetchProducts();
+    products = await fetchProductsWithFallback();
     renderList();
     backfillMissingImages();
   } catch (error) {
+    adminGateError.textContent = error?.message || '비밀번호 확인에 실패했어요.';
     adminGateError.hidden = false;
   }
 }

@@ -61,15 +61,15 @@
       <h2>캠페인 제안서</h2>
       <p class="collab-form-sub">아래 내용을 채워서 제출하면 담당자가 확인 후 연락드려요.</p>
 
-      <label class="collab-image-upload">
+      <div class="collab-image-upload">
         <span>캠페인 대표 이미지</span>
-        <div class="collab-image-drop" id="collabImageDrop">
+        <button type="button" class="collab-image-drop" id="collabImageDrop" aria-label="캠페인 대표 이미지 업로드">
           <img id="collabImagePreview" class="hidden" alt="업로드한 대표 이미지" />
           <span id="collabImagePlus" class="collab-image-plus" aria-hidden="true">+</span>
-        </div>
+        </button>
         <input id="collabImageInput" type="file" accept="image/*" class="hidden" />
         <small>권장 사이즈 1000×1000px, 10MB 이하</small>
-      </label>
+      </div>
 
       <div class="collab-field">
         <span>캠페인 유형</span>

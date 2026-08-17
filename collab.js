@@ -8,6 +8,7 @@ const collabSubmitStatus = document.getElementById('collabSubmitStatus');
 
 let selectedCampaignType = '';
 let selectedImageDataUrl = '';
+let imagePickerLocked = false;
 
 const fieldIds = [
   'brandName',
@@ -20,11 +21,10 @@ const fieldIds = [
   'proposalContent',
 ];
 
-collabImageDrop.addEventListener('click', () => collabImageInput.click());
-
 collabImageInput.addEventListener('change', () => {
   const file = collabImageInput.files?.[0];
   if (!file) return;
+  imagePickerLocked = false;
   const reader = new FileReader();
   reader.onload = () => {
     selectedImageDataUrl = String(reader.result || '');
@@ -33,6 +33,19 @@ collabImageInput.addEventListener('change', () => {
     collabImagePlus.classList.add('hidden');
   };
   reader.readAsDataURL(file);
+});
+
+collabImageDrop.addEventListener('click', () => {
+  if (imagePickerLocked) return;
+  imagePickerLocked = true;
+  collabImageInput.click();
+});
+
+window.addEventListener('focus', () => {
+  if (!imagePickerLocked) return;
+  setTimeout(() => {
+    imagePickerLocked = false;
+  }, 250);
 });
 
 campaignTypeGroup.addEventListener('click', (event) => {
@@ -80,7 +93,7 @@ collabSubmitBtn.addEventListener('click', async () => {
     rewardAmount: getValue('rewardAmount'),
     productFeature: getValue('productFeature'),
     proposalContent: getValue('proposalContent'),
-    imageDataUrl: selectedImageDataUrl,
+    imageUrl: selectedImageDataUrl,
     source: 'collab.html',
     submittedAt: new Date().toISOString(),
   };

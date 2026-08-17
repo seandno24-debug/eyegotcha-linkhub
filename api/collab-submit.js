@@ -35,7 +35,7 @@ export default async function handler(req, res) {
       reward_amount: clean(body.rewardAmount),
       product_feature: clean(body.productFeature),
       proposal_content: clean(body.proposalContent),
-      image_url: '',
+      image_url: clean(body.imageUrl || body.imageDataUrl),
       source: clean(body.source) || 'collab.html',
     };
 
@@ -58,7 +58,7 @@ export default async function handler(req, res) {
 
     const webhookResult = await webhookResponse.json().catch(() => ({}));
     if (!webhookResponse.ok) {
-      throw new Error(webhookResult?.error || '시트 저장에 실패했어요');
+      throw new Error(webhookResult?.error || `시트 저장에 실패했어요 (${webhookResponse.status})`);
     }
 
     res.status(200).json({ ok: true, sheetStored: true });
