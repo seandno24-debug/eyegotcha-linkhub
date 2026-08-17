@@ -66,6 +66,14 @@ function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
   return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
+function syncPublicProductsCache(items) {
+  try {
+    localStorage.setItem(PUBLIC_PRODUCTS_CACHE_KEY, JSON.stringify(items));
+  } catch {
+    // ignore storage failures
+  }
+}
+
 async function fetchProducts() {
   const response = await fetchWithTimeout('/api/products', { cache: 'no-store' }, 5000);
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -222,6 +230,7 @@ function renderList() {
       try {
         await deleteProductFromApi(no);
         products = products.filter((item) => Number(item.no) !== no);
+        syncPublicProductsCache(products);
         renderList();
         resetForm();
       } catch (error) {
@@ -276,6 +285,7 @@ async function submitItem() {
     products.push(next);
   }
 
+  syncPublicProductsCache(products);
   renderList();
   resetForm();
 }
@@ -345,6 +355,7 @@ async function backfillMissingImages() {
       for (const product of nextProducts) {
         try { await saveProductToApi(product); } catch (error) { console.warn(error); }
       }
+      syncPublicProductsCache(products);
       renderList();
       setAutofillStatus('비어 있던 썸네일을 자동으로 채웠어.', true);
     }
@@ -398,6 +409,7 @@ async function login() {
     adminPanel.classList.remove('hidden');
     adminGateError.hidden = true;
     products = await fetchProductsWithFallback();
+    syncPublicProductsCache(products);
     renderList();
     backfillMissingImages();
   } catch (error) {

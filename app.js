@@ -280,10 +280,24 @@ async function hydrateImages(items) {
   }
 }
 
-function setProducts(items) {
+function setProducts(items, options = {}) {
   PRODUCTS.splice(0, PRODUCTS.length, ...items);
-  saveProductsCache(PRODUCTS);
+  if (options.persist !== false) {
+    saveProductsCache(PRODUCTS);
+  }
   renderProducts();
+}
+
+function applyProductsFromStorage(rawValue) {
+  try {
+    const parsed = JSON.parse(rawValue);
+    if (!Array.isArray(parsed)) return;
+    const items = parsed.map(normalizeItem).filter((item) => item.no && item.title && item.link);
+    if (!items.length) return;
+    setProducts(items.sort((a, b) => Number(a.no) - Number(b.no)), { persist: false });
+  } catch {
+    // ignore malformed cache payloads
+  }
 }
 
 async function refreshProductsFromSheet() {
@@ -307,10 +321,15 @@ searchInput.addEventListener('input', (event) => {
 
 const initialProducts = loadProductsCache();
 if (initialProducts.length) {
-  setProducts(initialProducts.map(normalizeItem).filter((item) => item.no && item.title && item.link));
+  setProducts(initialProducts.map(normalizeItem).filter((item) => item.no && item.title && item.link), { persist: false });
 } else {
-  setProducts(FALLBACK_PRODUCTS.map(normalizeItem));
+  setProducts(FALLBACK_PRODUCTS.map(normalizeItem), { persist: false });
 }
 
 setLoading(false);
 void refreshProductsFromSheet();
+
+window.addEventListener('storage', (event) => {
+  if (event.key !== PRODUCTS_CACHE_KEY || typeof event.newValue !== 'string') return;
+  applyProductsFromStorage(event.newValue);
+});
